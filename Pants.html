@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooting Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 2px solid #333;
+            background: #fff;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+        }
+        #timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 30</div>
+    <div id="gameOver">Game Over! Your score: <span id="finalScore"></span></div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const gameOverElement = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+
+        let targets = [];
+        let score = 0;
+        let timeLeft = 30; // Game duration
+        const targetRadius = 15;
+
+        function createTarget() {
+            const x = Math.random() * (canvas.width - targetRadius * 2) + targetRadius;
+            const size = Math.random() * 15 + 10; // Random size for targets
+            targets.push({ x: x, y: 0, radius: size });
+        }
+
+        function drawTarget(target) {
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            targets.forEach(drawTarget);
+            scoreElement.innerText = 'Score: ' + score;
+            timerElement.innerText = 'Time: ' + timeLeft;
+        }
+
+        function updateTargets() {
+            targets.forEach(target => {
+                target.y += 2; // Move targets down
+            });
+            targets = targets.filter(target => target.y < canvas.height); // Remove off-screen targets
+        }
+
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            targets.forEach((target, index) => {
+                const distance = Math.sqrt((mouseX - target.x) ** 2 + (mouseY - target.y) ** 2);
+                if (distance < target.radius) {
+                    score++;
+                    targets.splice(index, 1); // Remove target that was hit
+                }
+            });
+        });
+
+        function startTimer() {
+            const timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        function gameOver() {
+            gameOverElement.style.display = 'block';
+            finalScoreElement.innerText = score;
+        }
+
+        function gameLoop() {
+            draw();
+            updateTargets();
+            if (Math.random() < 0.02) { // Adjust the frequency of target creation
+                createTarget();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        startTimer();
+        gameLoop();
+    </script>
+</body>
+</html>
+ 
